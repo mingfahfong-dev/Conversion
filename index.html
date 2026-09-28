@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CCLAS → XRF Adjustment Converter v2</title>
+<title>CCLAS → XRF Adjustment Converter v3</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23E8741C'/%3E%3Ccircle cx='20' cy='22' r='9' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Ccircle cx='20' cy='22' r='3' fill='%23fff'/%3E%3Cpath d='M33 22h17m-6-6 6 6-6 6' fill='none' stroke='%23fff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='32' cy='44' r='3' fill='%23fff'/%3E%3Cpath d='M18 50h28' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='56' r='3' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23E8741C'/%3E%3Ccircle cx='20' cy='22' r='9' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Ccircle cx='20' cy='22' r='3' fill='%23fff'/%3E%3Cpath d='M33 22h17m-6-6 6 6-6 6' fill='none' stroke='%23fff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='32' cy='44' r='3' fill='%23fff'/%3E%3Cpath d='M18 50h28' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='56' r='3' fill='%23fff'/%3E%3C/svg%3E">
 <meta name="theme-color" content="#1F3864">
@@ -45,7 +45,7 @@ body {
   font-family: "IBM Plex Sans", "Segoe UI", Roboto, Arial, sans-serif;
   font-size: 16px; line-height: 1.5;
 }
-.wrap { max-width: 860px; margin: 0 auto; padding: 28px 18px 40px; }
+.wrap { max-width: 1060px; margin: 0 auto; padding: 28px 18px 40px; }
 header h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.01em; }
 header p { margin: 0; color: var(--muted); max-width: 62ch; }
 .formula {
@@ -63,7 +63,7 @@ select, button {
 button.primary { background: var(--navy); color: var(--navy-ink); border-color: var(--navy); font-weight: 600; }
 .spacer { flex: 1; }
 .tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
-table { width: 100%; border-collapse: collapse; min-width: 480px; font-variant-numeric: tabular-nums; }
+table { width: 100%; border-collapse: collapse; min-width: 760px; font-variant-numeric: tabular-nums; }
 thead th {
   background: var(--navy); color: var(--navy-ink); font-weight: 600; font-size: .9rem;
   text-align: left; padding: 10px 12px;
@@ -72,7 +72,12 @@ thead th.out { background: var(--ore); color: #fff; }
 tbody td { padding: 8px 12px; border-top: 1px solid var(--line); vertical-align: middle; }
 td.an { font-weight: 700; width: 90px; }
 td.fac { color: var(--muted); width: 110px; }
-td.in { width: 190px; }
+td.in { width: 160px; }
+thead th.orig { background: #2E4A7A; }
+thead th.new { background: #2E7D4F; color: #fff; }
+td.new { background: color-mix(in srgb, #2E7D4F 12%, var(--surface)); font-weight: 700; font-size: 1.1rem; min-width: 140px; }
+td.new.empty { color: var(--muted); font-weight: 400; font-size: .95rem; }
+td.num { text-align: right; }
 td.out { background: var(--ore-soft); font-weight: 700; font-size: 1.1rem; color: var(--ore-ink); min-width: 150px; }
 td.out.neg { color: var(--neg); }
 td.out.empty { color: var(--muted); font-weight: 400; font-size: .95rem; }
@@ -91,9 +96,10 @@ footer { margin-top: 26px; color: var(--muted); font-size: .82rem; border-top: 1
 <body>
 <div class="wrap">
   <header>
-    <h1>CCLAS to XRF adjustment converter <span class="ver">v2</span></h1>
-    <p>Type the CCLAS bias for each analyte. The XRF adjustment updates as you type, in the same order as the CCLAS export.</p>
+    <h1>CCLAS to XRF adjustment converter <span class="ver">v3</span></h1>
+    <p>Type the CCLAS bias for each analyte, then the current XRF value. The XRF adjustment and the new XRF value update as you type, in the same order as the CCLAS export.</p>
     <div class="formula">XRF adjustment = CCLAS value <span>÷</span> conversion factor</div>
+    <div class="formula">XRF new = XRF original <span>+</span> XRF adjustment</div>
   </header>
 
   <div class="bar">
@@ -108,7 +114,7 @@ footer { margin-top: 26px; color: var(--muted); font-size: .82rem; border-top: 1
   <div class="tablebox">
     <table>
       <thead>
-        <tr><th>Analyte</th><th>Factor</th><th>CCLAS value</th><th class="out">XRF adjustment</th></tr>
+        <tr><th>Analyte</th><th>Factor</th><th>CCLAS value</th><th class="out">XRF adjustment</th><th class="orig">XRF original data</th><th class="new">XRF new data</th></tr>
       </thead>
       <tbody id="rows"></tbody>
     </table>
@@ -116,7 +122,7 @@ footer { margin-top: 26px; color: var(--muted); font-size: .82rem; border-top: 1
 
   <p class="note">Factors: Al2O3 0.5291, CaO 0.7147, Fe 0.6994 (Fe2O3), MgO 0.6032, SiO2 0.4675, TiO2 0.5995, Mn 0.7203 (Mn3O4) from the lab sheet. P 0.4364 (P2O5), S 0.4005 (SO3) and K2O 0.8301 are standard stoichiometric factors.</p>
 
-  <footer>PMLB · Oxide/element conversion for XRF bias adjustment · v2</footer>
+  <footer>PMLB · Oxide/element conversion for XRF bias adjustment · v3</footer>
 </div>
 
 <script>
@@ -142,7 +148,9 @@ ANALYTES.forEach((a, i) => {
     <td class="an">${sub(a.name)}</td>
     <td class="fac">÷ ${a.f.toFixed(4)}</td>
     <td class="in"><input type="text" inputmode="decimal" autocomplete="off" id="in${i}" aria-label="CCLAS value for ${a.name}" placeholder="0.000"></td>
-    <td class="out empty" id="out${i}">–</td>`;
+    <td class="out empty" id="out${i}">–</td>
+    <td class="in"><input type="text" inputmode="decimal" autocomplete="off" id="org${i}" aria-label="XRF original data for ${a.name}" placeholder="0.000"></td>
+    <td class="new empty" id="new${i}">–</td>`;
   tbody.appendChild(tr);
 });
 
@@ -153,38 +161,70 @@ function parse(v) {
   return { n: parseFloat(v) };
 }
 
+function fmt(r, dp) {
+  return (Object.is(+r.toFixed(dp), -0) ? 0 : r).toFixed(dp);
+}
+
 function calc(i) {
   const inp = document.getElementById("in" + i);
   const out = document.getElementById("out" + i);
+  const org = document.getElementById("org" + i);
+  const nw  = document.getElementById("new" + i);
   const p = parse(inp.value);
+  const o = parse(org.value);
   const dp = +dpSel.value;
   inp.classList.toggle("bad", !!p.bad);
+  org.classList.toggle("bad", !!o.bad);
+
+  // XRF adjustment
   out.className = "out";
-  if (p.empty) { out.textContent = "–"; out.classList.add("empty"); out.dataset.v = ""; return; }
-  if (p.bad)   { out.textContent = "Enter a number"; out.classList.add("empty"); out.dataset.v = ""; return; }
-  const r = p.n / ANALYTES[i].f;
-  const txt = (Object.is(+r.toFixed(dp), -0) ? 0 : r).toFixed(dp);
-  out.textContent = (r > 0 ? "+" : "") + txt;
-  out.dataset.v = txt;
-  if (r < 0) out.classList.add("neg");
+  let adj = null;                       // rounded adjustment, as displayed
+  if (p.empty)    { out.textContent = "–"; out.classList.add("empty"); out.dataset.v = ""; }
+  else if (p.bad) { out.textContent = "Enter a number"; out.classList.add("empty"); out.dataset.v = ""; }
+  else {
+    const r = p.n / ANALYTES[i].f;
+    const txt = fmt(r, dp);
+    out.textContent = (+txt > 0 ? "+" : "") + txt;
+    out.dataset.v = txt;
+    if (+txt < 0) out.classList.add("neg");
+    adj = +txt;
+  }
+
+  // XRF new = original + adjustment (blank CCLAS = no adjustment)
+  nw.className = "new";
+  if (o.empty)                { nw.textContent = "–"; nw.classList.add("empty"); nw.dataset.v = ""; }
+  else if (o.bad || p.bad)    { nw.textContent = o.bad ? "Enter a number" : "Fix CCLAS value"; nw.classList.add("empty"); nw.dataset.v = ""; }
+  else {
+    const txt = fmt(o.n + (adj ?? 0), dp);
+    nw.textContent = txt;
+    nw.dataset.v = txt;
+  }
 }
 const calcAll = () => ANALYTES.forEach((_, i) => calc(i));
 
-ANALYTES.forEach((_, i) => {
-  const inp = document.getElementById("in" + i);
-  inp.addEventListener("input", () => calc(i));
-  inp.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const next = document.getElementById("in" + (i + 1));
-      if (next) next.focus(); else inp.blur();
-    }
+// Enter moves down the same column; from the last CCLAS row it jumps to the first XRF original row
+function wire(prefix, onLast) {
+  ANALYTES.forEach((_, i) => {
+    const inp = document.getElementById(prefix + i);
+    inp.addEventListener("input", () => calc(i));
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const next = document.getElementById(prefix + (i + 1)) || onLast();
+        if (next) next.focus(); else inp.blur();
+      }
+    });
   });
-});
+}
+wire("in",  () => document.getElementById("org0"));
+wire("org", () => null);
 dpSel.addEventListener("change", calcAll);
 
 document.getElementById("clear").addEventListener("click", () => {
-  ANALYTES.forEach((_, i) => document.getElementById("in" + i).value = "");
+  ANALYTES.forEach((_, i) => {
+    document.getElementById("in" + i).value = "";
+    document.getElementById("org" + i).value = "";
+  });
   calcAll();
   document.getElementById("in0").focus();
 });
