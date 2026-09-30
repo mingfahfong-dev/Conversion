@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CCLAS → XRF Adjustment Converter v3</title>
+<title>CCLAS → XRF Adjustment Converter v5</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23E8741C'/%3E%3Ccircle cx='20' cy='22' r='9' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Ccircle cx='20' cy='22' r='3' fill='%23fff'/%3E%3Cpath d='M33 22h17m-6-6 6 6-6 6' fill='none' stroke='%23fff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='32' cy='44' r='3' fill='%23fff'/%3E%3Cpath d='M18 50h28' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='56' r='3' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23E8741C'/%3E%3Ccircle cx='20' cy='22' r='9' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Ccircle cx='20' cy='22' r='3' fill='%23fff'/%3E%3Cpath d='M33 22h17m-6-6 6 6-6 6' fill='none' stroke='%23fff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='32' cy='44' r='3' fill='%23fff'/%3E%3Cpath d='M18 50h28' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='56' r='3' fill='%23fff'/%3E%3C/svg%3E">
 <meta name="theme-color" content="#1F3864">
@@ -12,18 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --navy: #1F3864;
-  --navy-ink: #ffffff;
-  --ore: #E8741C;
-  --ore-soft: #FCEBDD;
-  --ore-ink: #8A3E06;
-  --bg: #EEF1F5;
-  --surface: #ffffff;
-  --text: #1B2433;
-  --muted: #5B6677;
-  --line: #D5DBE4;
-  --neg: #B42318;
-  --focus: #E8741C;
+  --navy: #1F3864; --navy-ink: #ffffff; --ore: #E8741C; --ore-soft: #FCEBDD; --ore-ink: #8A3E06;
+  --bg: #EEF1F5; --surface: #ffffff; --text: #1B2433; --muted: #5B6677; --line: #D5DBE4; --neg: #B42318; --ok: #1E7B45;
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -31,204 +21,369 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --navy: #22385E; --ore: #F28A3B; --ore-soft: #3A2515; --ore-ink: #FFC596;
-    --bg: #111722; --surface: #19212F; --text: #E6EBF2; --muted: #9AA6B8; --line: #2C3748; --neg: #FF8A80;
+    --bg: #111722; --surface: #19212F; --text: #E6EBF2; --muted: #9AA6B8; --line: #2C3748; --neg: #FF8A80; --ok: #6FD39A;
   }
 }
 :root[data-theme="dark"] {
   --navy: #22385E; --ore: #F28A3B; --ore-soft: #3A2515; --ore-ink: #FFC596;
-  --bg: #111722; --surface: #19212F; --text: #E6EBF2; --muted: #9AA6B8; --line: #2C3748; --neg: #FF8A80;
+  --bg: #111722; --surface: #19212F; --text: #E6EBF2; --muted: #9AA6B8; --line: #2C3748; --neg: #FF8A80; --ok: #6FD39A;
 }
 *, *::before, *::after { box-sizing: inherit; }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
-body {
-  margin: 0; background: var(--bg); color: var(--text);
-  font-family: "IBM Plex Sans", "Segoe UI", Roboto, Arial, sans-serif;
-  font-size: 16px; line-height: 1.5;
+body { margin: 0; background: var(--bg); color: var(--text); font-family: "IBM Plex Sans", "Segoe UI", Roboto, Arial, sans-serif; font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 2400px; margin: 0 auto; padding: 28px 28px 40px; }
+.layout { display: grid; grid-template-columns: 1fr; gap: 0 32px; align-items: start; }
+@media (min-width: 1600px) {
+  .layout { grid-template-columns: minmax(820px, 1fr) minmax(760px, 1.15fr); }
+  .colR h2 { margin-top: 20px; }
 }
-.wrap { max-width: 1060px; margin: 0 auto; padding: 28px 18px 40px; }
 header h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.01em; }
 header p { margin: 0; color: var(--muted); max-width: 62ch; }
-.formula {
-  display: inline-flex; align-items: center; gap: 10px; margin-top: 16px;
-  background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--ore);
-  padding: 10px 14px; border-radius: 6px; font-weight: 600;
-}
+.ver { font-size: .8rem; font-weight: 600; color: var(--ore-ink); background: var(--ore-soft); padding: 2px 8px; border-radius: 10px; vertical-align: middle; }
+.toprow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
+.formula { display: inline-flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--ore); padding: 10px 14px; border-radius: 6px; font-weight: 600; }
 .formula span { color: var(--ore-ink); }
-.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 22px 0 12px; }
+.clock { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--muted); }
+.clock b { color: var(--text); }
+h2 { font-size: 1.1rem; margin: 30px 0 10px; }
+.details { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 14px; margin-top: 20px; }
+.details label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 4px; }
+.details .wide { grid-column: 1 / -1; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 18px 0 12px; }
 .bar label { color: var(--muted); font-size: .92rem; }
-select, button {
-  font: inherit; font-size: .95rem; border-radius: 6px; border: 1px solid var(--line);
-  background: var(--surface); color: var(--text); padding: 7px 12px; cursor: pointer;
-}
-button.primary { background: var(--navy); color: var(--navy-ink); border-color: var(--navy); font-weight: 600; }
 .spacer { flex: 1; }
+select, button { font: inherit; font-size: .95rem; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--text); padding: 7px 12px; cursor: pointer; }
+button.primary { background: var(--navy); color: var(--navy-ink); border-color: var(--navy); font-weight: 600; }
+button.accent { background: var(--ore); color: #fff; border-color: var(--ore); font-weight: 600; }
+button.small { padding: 4px 9px; font-size: .85rem; }
+button.danger { color: var(--neg); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.status { font-size: .9rem; font-weight: 600; min-height: 1.4em; }
+.status.ok { color: var(--ok); } .status.err { color: var(--neg); }
 .tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
-table { width: 100%; border-collapse: collapse; min-width: 760px; font-variant-numeric: tabular-nums; }
-thead th {
-  background: var(--navy); color: var(--navy-ink); font-weight: 600; font-size: .9rem;
-  text-align: left; padding: 10px 12px;
-}
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+#convTable { min-width: 760px; }
+#logTable { min-width: 640px; }
+thead th { background: var(--navy); color: var(--navy-ink); font-weight: 600; font-size: .9rem; text-align: left; padding: 10px 12px; }
 thead th.out { background: var(--ore); color: #fff; }
 tbody td { padding: 8px 12px; border-top: 1px solid var(--line); vertical-align: middle; }
 td.an { font-weight: 700; width: 90px; }
 td.fac { color: var(--muted); width: 110px; }
-td.in { width: 160px; }
-thead th.orig { background: #2E4A7A; }
-thead th.new { background: #2E7D4F; color: #fff; }
-td.new { background: color-mix(in srgb, #2E7D4F 12%, var(--surface)); font-weight: 700; font-size: 1.1rem; min-width: 140px; }
-td.new.empty { color: var(--muted); font-weight: 400; font-size: .95rem; }
-td.num { text-align: right; }
+td.in { width: 150px; }
+td.aft { font-weight: 700; min-width: 110px; }
+td.aft.empty { color: var(--muted); font-weight: 400; }
+thead th.grp { background: #2E4B7A; }
 td.out { background: var(--ore-soft); font-weight: 700; font-size: 1.1rem; color: var(--ore-ink); min-width: 150px; }
 td.out.neg { color: var(--neg); }
 td.out.empty { color: var(--muted); font-weight: 400; font-size: .95rem; }
-input[type="text"] {
-  width: 100%; font: inherit; font-variant-numeric: tabular-nums; padding: 7px 10px;
-  border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); text-align: right;
-}
+input[type="text"], textarea { width: 100%; font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); }
+td.in input { text-align: right; font-variant-numeric: tabular-nums; }
+textarea { resize: vertical; min-height: 2.6em; line-height: 1.4; }
 input.bad { border-color: var(--neg); }
-:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+#logTable td { font-size: .92rem; vertical-align: top; }
+#logTable tr.cmt td { background: var(--ore-soft); color: var(--text); font-style: italic; border-left: 4px solid var(--ore); padding: 7px 12px; white-space: pre-wrap; overflow-wrap: anywhere; border-top: 2px solid var(--line); }
+#logTable tr.has-cmt td { border-top: none; }
+.cmt-ic { font-style: normal; margin-right: 4px; }
+#logTable td.when { white-space: nowrap; font-weight: 600; }
+.adj { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.adj span { white-space: nowrap; }
+.adj b { color: var(--ore-ink); }
+.adj .n { color: var(--neg); }
+.adj .ba { color: var(--muted); }
+.acts { white-space: nowrap; }
+.empty-log { padding: 18px; color: var(--muted); text-align: center; }
+.logmode { font-size: .85rem; color: var(--muted); margin: 0 0 8px; }
+:focus-visible { outline: 3px solid var(--ore); outline-offset: 2px; }
 .note { color: var(--muted); font-size: .88rem; margin-top: 14px; max-width: 70ch; }
-.ver { font-size: .8rem; font-weight: 600; color: var(--ore-ink); background: var(--ore-soft); padding: 2px 8px; border-radius: 10px; vertical-align: middle; }
 footer { margin-top: 26px; color: var(--muted); font-size: .82rem; border-top: 1px solid var(--line); padding-top: 12px; }
-@media (max-width: 600px) { header h1 { font-size: 1.3rem; } }
+#printSheet { display: none; }
+@media (max-width: 600px) { header h1 { font-size: 1.3rem; } .clock { margin-left: 0; } }
+@media print {
+  @page { size: A4 portrait; margin: 15mm; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  :root { padding: 0; }
+  .wrap { display: none !important; }
+  #printSheet { display: block; color: #000; }
+  #printSheet .ph { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 12px; }
+  #printSheet h1 { font-size: 16pt; margin: 0; }
+  #printSheet dl { display: grid; grid-template-columns: 110px 1fr; gap: 4px 12px; margin: 0 0 14px; }
+  #printSheet dt { font-weight: 700; }
+  #printSheet dd { margin: 0; white-space: pre-wrap; }
+  #printSheet table { border: 1px solid #000; }
+  #printSheet th, #printSheet td { border: 1px solid #000; padding: 6px 8px; background: #fff !important; color: #000 !important; text-align: left; }
+  #printSheet td.r, #printSheet th.r { text-align: right; }
+  #printSheet .sign { margin-top: 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+  #printSheet .sign div { border-top: 1px solid #000; padding-top: 4px; font-size: 9pt; }
+  #printSheet .pf { margin-top: 24px; font-size: 8.5pt; border-top: 1px solid #000; padding-top: 6px; display: flex; justify-content: space-between; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>CCLAS to XRF adjustment converter <span class="ver">v3</span></h1>
-    <p>Type the CCLAS bias for each analyte, then the current XRF value. The XRF adjustment and the new XRF value update as you type, in the same order as the CCLAS export.</p>
-    <div class="formula">XRF adjustment = CCLAS value <span>÷</span> conversion factor</div>
-    <div class="formula">XRF new = XRF original <span>+</span> XRF adjustment</div>
+    <h1>CCLAS to XRF adjustment converter <span class="ver">v5</span></h1>
+    <p>Type the CCLAS bias for each analyte, plus the XRF result before adjustment if you have it. The adjustment and the new XRF result update as you type. Save to the shared log, or print it as a record.</p>
+    <div class="toprow">
+      <div class="formula">Adjustment = CCLAS <span>÷</span> factor · After = Before <span>+</span> Adjustment</div>
+      <div class="clock" aria-live="off">🕒 <b id="clock">–</b></div>
+    </div>
   </header>
+
+  <div class="layout">
+  <section class="colL">
+  <div class="details">
+    <div><label for="operator">Operator</label><input type="text" id="operator" autocomplete="off" placeholder="Name"></div>
+    <div><label for="instrument">XRF instrument</label><input type="text" id="instrument" list="instList" autocomplete="off" placeholder="e.g. XRF 1"><datalist id="instList"></datalist></div>
+    <div class="wide"><label for="note">Note</label><textarea id="note" rows="2" placeholder="Reason for adjustment, CRM used, etc."></textarea></div>
+  </div>
 
   <div class="bar">
     <label for="dp">Decimal places</label>
-    <select id="dp">
-      <option>3</option><option selected>4</option><option>5</option><option>6</option>
-    </select>
+    <select id="dp"><option>3</option><option selected>4</option><option>5</option><option>6</option></select>
     <div class="spacer"></div>
     <button id="clear" type="button">Clear all</button>
+    <button id="print" type="button" class="primary">Print</button>
+    <button id="save" type="button" class="accent">Save to log</button>
   </div>
+  <div class="status" id="status" role="status"></div>
 
   <div class="tablebox">
-    <table>
-      <thead>
-        <tr><th>Analyte</th><th>Factor</th><th>CCLAS value</th><th class="out">XRF adjustment</th><th class="orig">XRF original data</th><th class="new">XRF new data</th></tr>
-      </thead>
+    <table id="convTable">
+      <thead><tr><th>Analyte</th><th>Factor</th><th>CCLAS value</th><th class="out">XRF adjustment</th><th class="grp">XRF before</th><th class="grp">XRF after</th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
   </div>
 
+  </section>
+  <section class="colR">
+  <h2>Adjustment log</h2>
+  <p class="logmode" id="logmode">Connecting to log…</p>
+  <div class="tablebox">
+    <table id="logTable">
+      <thead><tr><th>Date / time</th><th>Operator</th><th>Instrument</th><th>XRF adjustments (before → after)</th><th></th></tr></thead>
+      <tbody id="logRows"><tr><td colspan="5" class="empty-log">No adjustments saved yet.</td></tr></tbody>
+    </table>
+  </div>
+
+  </section>
+  </div>
+
   <p class="note">Factors: Al2O3 0.5291, CaO 0.7147, Fe 0.6994 (Fe2O3), MgO 0.6032, SiO2 0.4675, TiO2 0.5995, Mn 0.7203 (Mn3O4) from the lab sheet. P 0.4364 (P2O5), S 0.4005 (SO3) and K2O 0.8301 are standard stoichiometric factors.</p>
 
-  <footer>PMLB · Oxide/element conversion for XRF bias adjustment · v3</footer>
+  <footer>PMLB · Oxide/element conversion for XRF bias adjustment · v5</footer>
 </div>
+
+<div id="printSheet"></div>
 
 <script>
 const ANALYTES = [
-  { col: "Q", name: "Fe",    f: 0.6994 },
-  { col: "R", name: "P",     f: 0.4364 },
-  { col: "S", name: "SiO2",  f: 0.4675 },
-  { col: "T", name: "Al2O3", f: 0.5291 },
-  { col: "U", name: "TiO2",  f: 0.5995 },
-  { col: "V", name: "CaO",   f: 0.7147 },
-  { col: "W", name: "Mn",    f: 0.7203 },
-  { col: "X", name: "MgO",   f: 0.6032 },
-  { col: "Y", name: "S",     f: 0.4005 },
-  { col: "Z", name: "K2O",   f: 0.8301 }
+  { name: "Fe", f: 0.6994 }, { name: "P", f: 0.4364 }, { name: "SiO2", f: 0.4675 },
+  { name: "Al2O3", f: 0.5291 }, { name: "TiO2", f: 0.5995 }, { name: "CaO", f: 0.7147 },
+  { name: "Mn", f: 0.7203 }, { name: "MgO", f: 0.6032 }, { name: "S", f: 0.4005 }, { name: "K2O", f: 0.8301 }
 ];
-const sub = s => s.replace(/(\d)/g, "<sub>$1</sub>");
-const tbody = document.getElementById("rows");
-const dpSel = document.getElementById("dp");
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const sub = s => esc(s).replace(/(\d)/g, "<sub>$1</sub>");
+const fmtTime = ms => new Date(ms).toLocaleString("en-AU", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+const signed = (v, dp) => { const n = +v; const t = (Object.is(+n.toFixed(dp), -0) ? 0 : n).toFixed(dp); return (n > 0 && +t !== 0 ? "+" : "") + t; };
 
+/* ---------- clock ---------- */
+const tick = () => { $("clock").textContent = fmtTime(Date.now()); };
+tick(); setInterval(tick, 1000);
+
+/* ---------- converter ---------- */
+const tbody = $("rows"), dpSel = $("dp");
 ANALYTES.forEach((a, i) => {
   const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td class="an">${sub(a.name)}</td>
-    <td class="fac">÷ ${a.f.toFixed(4)}</td>
-    <td class="in"><input type="text" inputmode="decimal" autocomplete="off" id="in${i}" aria-label="CCLAS value for ${a.name}" placeholder="0.000"></td>
+  tr.innerHTML = `<td class="an">${sub(a.name)}</td><td class="fac">÷ ${a.f.toFixed(4)}</td>
+    <td class="in"><input type="text" inputmode="decimal" autocomplete="off" id="in${i}" aria-label="CCLAS value for ${esc(a.name)}" placeholder="0.000"></td>
     <td class="out empty" id="out${i}">–</td>
-    <td class="in"><input type="text" inputmode="decimal" autocomplete="off" id="org${i}" aria-label="XRF original data for ${a.name}" placeholder="0.000"></td>
-    <td class="new empty" id="new${i}">–</td>`;
+    <td class="in"><input type="text" inputmode="decimal" autocomplete="off" id="bf${i}" aria-label="XRF result before adjustment for ${esc(a.name)}" placeholder="before"></td>
+    <td class="aft empty" id="af${i}">–</td>`;
   tbody.appendChild(tr);
 });
-
 function parse(v) {
   v = v.trim().replace(/\u2212/g, "-").replace(",", ".");
-  if (v === "" ) return { empty: true };
+  if (v === "") return { empty: true };
   if (!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(v)) return { bad: true };
   return { n: parseFloat(v) };
 }
-
-function fmt(r, dp) {
-  return (Object.is(+r.toFixed(dp), -0) ? 0 : r).toFixed(dp);
-}
-
 function calc(i) {
-  const inp = document.getElementById("in" + i);
-  const out = document.getElementById("out" + i);
-  const org = document.getElementById("org" + i);
-  const nw  = document.getElementById("new" + i);
-  const p = parse(inp.value);
-  const o = parse(org.value);
-  const dp = +dpSel.value;
+  const inp = $("in" + i), out = $("out" + i), p = parse(inp.value), dp = +dpSel.value;
+  const bin = $("bf" + i), af = $("af" + i), b = parse(bin.value);
   inp.classList.toggle("bad", !!p.bad);
-  org.classList.toggle("bad", !!o.bad);
-
-  // XRF adjustment
-  out.className = "out";
-  let adj = null;                       // rounded adjustment, as displayed
-  if (p.empty)    { out.textContent = "–"; out.classList.add("empty"); out.dataset.v = ""; }
-  else if (p.bad) { out.textContent = "Enter a number"; out.classList.add("empty"); out.dataset.v = ""; }
-  else {
-    const r = p.n / ANALYTES[i].f;
-    const txt = fmt(r, dp);
-    out.textContent = (+txt > 0 ? "+" : "") + txt;
-    out.dataset.v = txt;
-    if (+txt < 0) out.classList.add("neg");
-    adj = +txt;
+  bin.classList.toggle("bad", !!b.bad || (!b.empty && p.empty));
+  out.className = "out"; af.className = "aft";
+  if (p.empty || p.bad) {
+    out.textContent = p.bad ? "Enter a number" : "–"; out.classList.add("empty");
+    af.textContent = (!b.empty && !b.bad) ? "Needs CCLAS" : "–"; af.classList.add("empty");
+    return;
   }
-
-  // XRF new = original + adjustment (blank CCLAS = no adjustment)
-  nw.className = "new";
-  if (o.empty)                { nw.textContent = "–"; nw.classList.add("empty"); nw.dataset.v = ""; }
-  else if (o.bad || p.bad)    { nw.textContent = o.bad ? "Enter a number" : "Fix CCLAS value"; nw.classList.add("empty"); nw.dataset.v = ""; }
-  else {
-    const txt = fmt(o.n + (adj ?? 0), dp);
-    nw.textContent = txt;
-    nw.dataset.v = txt;
-  }
+  const r = p.n / ANALYTES[i].f;
+  out.textContent = signed(r, dp);
+  if (+r.toFixed(dp) < 0) out.classList.add("neg");
+  if (b.empty || b.bad) { af.textContent = b.bad ? "Enter a number" : "–"; af.classList.add("empty"); return; }
+  af.textContent = (b.n + r).toFixed(dp);
 }
 const calcAll = () => ANALYTES.forEach((_, i) => calc(i));
-
-// Enter moves down the same column; from the last CCLAS row it jumps to the first XRF original row
-function wire(prefix, onLast) {
-  ANALYTES.forEach((_, i) => {
-    const inp = document.getElementById(prefix + i);
-    inp.addEventListener("input", () => calc(i));
-    inp.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const next = document.getElementById(prefix + (i + 1)) || onLast();
-        if (next) next.focus(); else inp.blur();
-      }
-    });
+const allInputs = [];
+ANALYTES.forEach((_, i) => { allInputs.push($("in" + i), $("bf" + i)); });
+allInputs.forEach((inp, k) => {
+  const i = Math.floor(k / 2);
+  inp.addEventListener("input", () => { calc(i); setStatus(""); });
+  inp.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); const nx = allInputs[k + 1]; nx ? nx.focus() : inp.blur(); }
   });
+});
+dpSel.addEventListener("change", () => { calcAll(); renderLog(); });
+
+/* current entry: only analytes with a valid number */
+function currentRows() {
+  const rows = []; let bad = false, orphan = "";
+  ANALYTES.forEach((a, i) => {
+    const p = parse($("in" + i).value), b = parse($("bf" + i).value);
+    if (p.bad || b.bad) { bad = true; return; }
+    if (p.empty) { if (!b.empty && !orphan) orphan = a.name; return; }
+    const xrf = p.n / a.f;
+    rows.push({ a: a.name, f: a.f, cclas: p.n, xrf, before: b.empty ? null : b.n, after: b.empty ? null : b.n + xrf });
+  });
+  return { rows, bad, orphan };
 }
-wire("in",  () => document.getElementById("org0"));
-wire("org", () => null);
-dpSel.addEventListener("change", calcAll);
 
-document.getElementById("clear").addEventListener("click", () => {
-  ANALYTES.forEach((_, i) => {
-    document.getElementById("in" + i).value = "";
-    document.getElementById("org" + i).value = "";
-  });
-  calcAll();
-  document.getElementById("in0").focus();
+let statusTimer;
+function setStatus(msg, kind) {
+  const s = $("status"); s.textContent = msg || ""; s.className = "status" + (kind ? " " + kind : "");
+  clearTimeout(statusTimer); if (msg && kind === "ok") statusTimer = setTimeout(() => setStatus(""), 3000);
+}
+
+$("clear").addEventListener("click", () => {
+  ANALYTES.forEach((_, i) => { $("in" + i).value = ""; $("bf" + i).value = ""; });
+  $("note").value = "";
+  calcAll(); setStatus(""); $("in0").focus();
 });
 
+/* remember operator + instrument on this device (convenience only) */
+const LS = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+$("operator").value = LS.get("xrfconv.operator") || "";
+$("instrument").value = LS.get("xrfconv.instrument") || "";
+$("operator").addEventListener("change", e => LS.set("xrfconv.operator", e.target.value.trim()));
+$("instrument").addEventListener("change", e => LS.set("xrfconv.instrument", e.target.value.trim()));
+
+/* ---------- log (shared db, falls back to this device) ---------- */
+let col = null, entries = [], canWrite = true;
+const LOCAL_KEY = "xrfconv.log";
+const loadLocal = () => { try { return JSON.parse(LS.get(LOCAL_KEY) || "[]"); } catch { return []; } };
+const saveLocal = () => LS.set(LOCAL_KEY, JSON.stringify(entries.slice(0, 500)));
+
+function useLocal(reason) {
+  col = null; entries = loadLocal();
+  $("logmode").textContent = reason || "Saved on this device only (shared log not available when the file is opened offline).";
+  renderLog();
+}
+
+async function initLog() {
+  const c = window.claude;
+  if (!c || typeof c.use !== "function") { useLocal(); return; }
+  let db = null;
+  try { db = await c.use("db"); } catch { db = null; }
+  if (!db) { useLocal("Shared log not available here. Entries are saved on this device only."); return; }
+  try {
+    const user = await c.use("user");
+    if (user) { const w = await user.can("data.write"); if (w === false) canWrite = false; }
+  } catch {}
+  col = db.collection("adjustments");
+  $("logmode").textContent = canWrite ? "Shared log · everyone with this link sees the same entries, live." : "Shared log · view only (you can read entries but not save).";
+  if (!canWrite) $("save").disabled = true;
+  col.orderBy("tsMs", "desc").limit(300).onSnapshot(
+    snap => { entries = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderLog(); },
+    err => { $("logmode").textContent = "Shared log unavailable right now (" + err.code + ")."; }
+  );
+}
+
+function renderLog() {
+  const dp = +dpSel.value, lr = $("logRows");
+  const insts = [...new Set(entries.map(e => e.instrument).filter(Boolean))];
+  $("instList").innerHTML = insts.map(v => `<option value="${esc(v)}">`).join("");
+  if (!entries.length) { lr.innerHTML = `<tr><td colspan="5" class="empty-log">No adjustments saved yet.</td></tr>`; return; }
+  lr.innerHTML = entries.map((e, idx) => `${e.note ? `<tr class="cmt"><td colspan="5"><span class="cmt-ic" aria-hidden="true">💬</span> ${esc(e.note)}</td></tr>` : ""}<tr class="${e.note ? "has-cmt" : ""}">
+    <td class="when">${esc(fmtTime(e.tsMs))}</td>
+    <td>${esc(e.operator)}</td>
+    <td>${esc(e.instrument)}</td>
+    <td><div class="adj">${(e.rows || []).map(r => `<span>${sub(r.a)} <b class="${+r.xrf.toFixed(dp) < 0 ? "n" : ""}">${esc(signed(r.xrf, dp))}</b>${r.before != null ? ` <span class="ba">(${esc((+r.before).toFixed(dp))} → ${esc((+r.after).toFixed(dp))})</span>` : ""}</span>`).join("")}</div></td>
+    <td class="acts"><button class="small" data-print="${idx}" type="button">Print</button> ${canWrite ? `<button class="small danger" data-del="${idx}" type="button">Delete</button>` : ""}</td>
+  </tr>`).join("");
+}
+
+$("logRows").addEventListener("click", async ev => {
+  const pb = ev.target.closest("[data-print]"), db_ = ev.target.closest("[data-del]");
+  if (pb) printEntry(entries[+pb.dataset.print], true);
+  if (db_) {
+    const e = entries[+db_.dataset.del]; if (!e) return;
+    if (!confirm(`Delete the entry from ${fmtTime(e.tsMs)} by ${e.operator || "unknown"}?`)) return;
+    try {
+      if (col) await col.doc(e.id).delete();
+      else { entries = entries.filter(x => x !== e); saveLocal(); renderLog(); }
+      setStatus("Entry deleted.", "ok");
+    } catch (err) { setStatus("Could not delete (" + (err.code || "error") + ").", "err"); }
+  }
+});
+
+function validate() {
+  const { rows, bad, orphan } = currentRows();
+  if (bad) { setStatus("Fix the highlighted value first.", "err"); return null; }
+  if (orphan) { setStatus(orphan + " has an XRF before value but no CCLAS value.", "err"); return null; }
+  if (!rows.length) { setStatus("Enter at least one CCLAS value.", "err"); return null; }
+  return rows;
+}
+
+let saving = false;
+$("save").addEventListener("click", async () => {
+  if (saving) return;
+  const rows = validate(); if (!rows) return;
+  const operator = $("operator").value.trim(), instrument = $("instrument").value.trim();
+  if (!operator) { setStatus("Enter the operator name before saving.", "err"); $("operator").focus(); return; }
+  if (!instrument) { setStatus("Enter the XRF instrument before saving.", "err"); $("instrument").focus(); return; }
+  const now = Date.now();
+  const entry = { tsMs: now, ts: new Date(now).toISOString(), operator, instrument, note: $("note").value.trim(),
+    rows: rows.map(r => ({ a: r.a, f: r.f, cclas: r.cclas, xrf: r.xrf, before: r.before, after: r.after })) };
+  saving = true; $("save").disabled = true;
+  try {
+    if (col) await col.add(entry);
+    else { entries.unshift({ id: "l" + now, ...entry }); saveLocal(); renderLog(); }
+    LS.set("xrfconv.operator", operator); LS.set("xrfconv.instrument", instrument);
+    setStatus("Saved to log at " + fmtTime(now) + ".", "ok");
+  } catch (err) {
+    setStatus("Could not save (" + (err.code || "error") + "). Try again.", "err");
+  } finally { saving = false; $("save").disabled = !canWrite; }
+});
+
+/* ---------- print ---------- */
+function printEntry(e, fromLog) {
+  if (!e) return;
+  const dp = +dpSel.value;
+  $("printSheet").innerHTML = `
+    <div class="ph"><h1>XRF adjustment record</h1><div>PMLB</div></div>
+    <dl>
+      <dt>Date / time</dt><dd>${esc(fmtTime(e.tsMs))}${fromLog ? "" : " (not saved to log)"}</dd>
+      <dt>Operator</dt><dd>${esc(e.operator) || "—"}</dd>
+      <dt>XRF instrument</dt><dd>${esc(e.instrument) || "—"}</dd>
+      <dt>Note</dt><dd>${esc(e.note) || "—"}</dd>
+    </dl>
+    <table>
+      <thead><tr><th>Analyte</th><th class="r">CCLAS value</th><th class="r">Factor</th><th class="r">XRF adjustment</th><th class="r">XRF before</th><th class="r">XRF after</th></tr></thead>
+      <tbody>${e.rows.map(r => `<tr><td>${sub(r.a)}</td><td class="r">${esc(signed(r.cclas, dp))}</td><td class="r">÷ ${(+r.f).toFixed(4)}</td><td class="r"><b>${esc(signed(r.xrf, dp))}</b></td><td class="r">${r.before != null ? esc((+r.before).toFixed(dp)) : "—"}</td><td class="r"><b>${r.after != null ? esc((+r.after).toFixed(dp)) : "—"}</b></td></tr>`).join("")}</tbody>
+    </table>
+    <div class="sign"><div>Adjusted by (signature)</div><div>Checked by (signature)</div></div>
+    <div class="pf"><span>CCLAS → XRF adjustment converter · v5</span><span>Printed ${esc(fmtTime(Date.now()))}</span></div>`;
+  try { window.print(); } catch { setStatus("Printing is blocked in this viewer. Open the downloaded file in your browser to print.", "err"); }
+}
+
+$("print").addEventListener("click", () => {
+  const rows = validate(); if (!rows) return;
+  printEntry({ tsMs: Date.now(), operator: $("operator").value.trim(), instrument: $("instrument").value.trim(), note: $("note").value.trim(), rows }, false);
+});
+
+initLog();
 </script>
 </body>
 </html>
